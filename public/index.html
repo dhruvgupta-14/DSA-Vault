@@ -58,6 +58,8 @@
   .btn-danger:hover{background:var(--danger-soft);}
   .btn-sm{padding:6px 10px;font-size:12.5px;}
 
+  .error-banner{background:var(--danger-soft);color:var(--danger);border-bottom:1px solid rgba(226,104,92,0.35);padding:9px 20px;font-size:13px;flex-shrink:0;}
+
   .layout{flex:1;display:flex;min-height:0;}
 
   .sidebar-col{width:340px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;background:var(--panel);}
@@ -78,8 +80,6 @@
   .row-meta .cat{color:var(--accent);}
 
   .list-empty, .detail-empty{padding:20px 14px;color:var(--text-muted);font-size:13.5px;line-height:1.6;}
-
-  .sidebar-footer{padding:10px;border-top:1px solid var(--border);display:flex;gap:8px;}
 
   .detail-col{flex:1;overflow-y:auto;padding:30px 40px;min-width:0;}
   .back-btn{display:none;margin-bottom:14px;}
@@ -117,7 +117,6 @@
   .field-input:focus-visible, .field-textarea:focus-visible{border-color:var(--accent);}
   .field-textarea{resize:vertical;font-family:var(--font-sans);}
   .field-textarea.code{font-family:var(--font-mono);font-size:13px;min-height:230px;}
-  .field-hint{font-size:11.5px;color:var(--text-muted);margin:-11px 0 15px;}
   .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
 
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel-alt);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;z-index:100;box-shadow:0 6px 18px rgba(0,0,0,0.35);}
@@ -144,7 +143,7 @@
 (function(){
   "use strict";
 
-  var STORAGE_KEY = "dsa-templates-v1";
+  var API = "/api/templates";
 
   var CPP_KEYWORDS = new Set(["alignas","alignof","and","and_eq","asm","auto","bitand","bitor","break","case","catch","class","compl","const","constexpr","const_cast","continue","decltype","default","delete","do","dynamic_cast","else","enum","explicit","export","extern","false","final","for","friend","goto","if","inline","mutable","namespace","new","noexcept","not","not_eq","nullptr","operator","or","or_eq","override","private","protected","public","return","sizeof","static","static_assert","static_cast","struct","switch","template","this","thread_local","throw","true","try","typedef","typeid","typename","union","using","virtual","volatile","while","xor","xor_eq"]);
   var CPP_TYPES = new Set(["int","long","short","char","bool","float","double","void","unsigned","signed","size_t","auto","string","vector","pair","map","unordered_map","set","unordered_set","queue","priority_queue","stack","deque","list","array","tuple","function","LLONG_MAX","LLONG_MIN","INT_MAX","INT_MIN"]);
@@ -172,61 +171,6 @@
     });
   }
 
-  function uid(){
-    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return "id-"+Date.now()+"-"+Math.random().toString(16).slice(2);
-  }
-
-  function defaultTemplates(){
-    return [
-      {id:uid(),title:"Binary Search",category:"Searching",time:"O(log n)",space:"O(1)",tags:["search","arrays"],
-        code:"int binarySearch(vector<int>& arr, int target) {\n    int lo = 0, hi = (int)arr.size() - 1;\n    while (lo <= hi) {\n        int mid = lo + (hi - lo) / 2;\n        if (arr[mid] == target) return mid;\n        else if (arr[mid] < target) lo = mid + 1;\n        else hi = mid - 1;\n    }\n    return -1; // not found\n}",
-        notes:"Classic iterative binary search on a sorted array. Adapt the comparison for lower_bound / upper_bound style variants."},
-      {id:uid(),title:"Two Pointers (sorted array)",category:"Arrays",time:"O(n)",space:"O(1)",tags:["two-pointer","arrays"],
-        code:"bool twoSumSorted(vector<int>& arr, int target) {\n    int left = 0, right = (int)arr.size() - 1;\n    while (left < right) {\n        int sum = arr[left] + arr[right];\n        if (sum == target) return true;\n        else if (sum < target) left++;\n        else right--;\n    }\n    return false;\n}",
-        notes:"Move pointers inward based on comparison to target. Works for pair-sum, container-with-most-water style problems."},
-      {id:uid(),title:"Sliding Window (variable size)",category:"Arrays",time:"O(n)",space:"O(1)",tags:["sliding-window","arrays"],
-        code:"int longestSubarrayAtMostK(vector<int>& arr, int k) {\n    int left = 0, sum = 0, best = 0;\n    for (int right = 0; right < (int)arr.size(); right++) {\n        sum += arr[right];\n        while (sum > k) {\n            sum -= arr[left];\n            left++;\n        }\n        best = max(best, right - left + 1);\n    }\n    return best;\n}",
-        notes:"Shrink the window from the left whenever the constraint is violated. Swap the condition for max-sum / distinct-count variants."},
-      {id:uid(),title:"DFS (adjacency list)",category:"Graphs",time:"O(V+E)",space:"O(V)",tags:["graph","dfs"],
-        code:"void dfs(int node, vector<vector<int>>& adj, vector<bool>& visited) {\n    visited[node] = true;\n    // process(node);\n    for (int next : adj[node]) {\n        if (!visited[next]) dfs(next, adj, visited);\n    }\n}",
-        notes:"Recursive DFS. For large graphs, convert to an explicit stack to avoid recursion depth issues."},
-      {id:uid(),title:"BFS (shortest path, unweighted)",category:"Graphs",time:"O(V+E)",space:"O(V)",tags:["graph","bfs","shortest-path"],
-        code:"vector<int> bfs(int start, vector<vector<int>>& adj, int n) {\n    vector<int> dist(n, -1);\n    queue<int> q;\n    dist[start] = 0;\n    q.push(start);\n    while (!q.empty()) {\n        int node = q.front(); q.pop();\n        for (int next : adj[node]) {\n            if (dist[next] == -1) {\n                dist[next] = dist[node] + 1;\n                q.push(next);\n            }\n        }\n    }\n    return dist;\n}",
-        notes:"dist[i] == -1 means unreachable. Works only when all edge weights are equal (1)."},
-      {id:uid(),title:"Union-Find (DSU)",category:"Data Structures",time:"O(a(n))",space:"O(n)",tags:["dsu","union-find","graph"],
-        code:"struct DSU {\n    vector<int> parent, rnk;\n    DSU(int n) : parent(n), rnk(n, 0) {\n        iota(parent.begin(), parent.end(), 0);\n    }\n    int find(int x) {\n        if (parent[x] != x) parent[x] = find(parent[x]);\n        return parent[x];\n    }\n    bool unite(int a, int b) {\n        a = find(a); b = find(b);\n        if (a == b) return false;\n        if (rnk[a] < rnk[b]) swap(a, b);\n        parent[b] = a;\n        if (rnk[a] == rnk[b]) rnk[a]++;\n        return true;\n    }\n};",
-        notes:"Path compression + union by rank. Near-constant time per operation. Great for Kruskal's MST and connectivity queries."},
-      {id:uid(),title:"Dijkstra (shortest path)",category:"Graphs",time:"O(E log V)",space:"O(V)",tags:["graph","dijkstra","shortest-path"],
-        code:"vector<long long> dijkstra(int start, int n, vector<vector<pair<int,int>>>& adj) {\n    vector<long long> dist(n, LLONG_MAX);\n    priority_queue<pair<long long,int>, vector<pair<long long,int>>, greater<>> pq;\n    dist[start] = 0;\n    pq.push({0, start});\n    while (!pq.empty()) {\n        auto [d, node] = pq.top(); pq.pop();\n        if (d > dist[node]) continue;\n        for (auto [next, w] : adj[node]) {\n            if (dist[node] + w < dist[next]) {\n                dist[next] = dist[node] + w;\n                pq.push({dist[next], next});\n            }\n        }\n    }\n    return dist;\n}",
-        notes:"adj[node] holds (neighbor, weight) pairs. Requires non-negative weights. Use a min-heap via greater<>."},
-      {id:uid(),title:"Kadane's Algorithm",category:"Dynamic Programming",time:"O(n)",space:"O(1)",tags:["dp","subarray"],
-        code:"int maxSubArray(vector<int>& nums) {\n    int best = nums[0], cur = nums[0];\n    for (int i = 1; i < (int)nums.size(); i++) {\n        cur = max(nums[i], cur + nums[i]);\n        best = max(best, cur);\n    }\n    return best;\n}",
-        notes:"Maximum sum contiguous subarray. cur decides whether to extend the previous run or restart at the current element."},
-      {id:uid(),title:"0/1 Knapsack",category:"Dynamic Programming",time:"O(n*W)",space:"O(n*W)",tags:["dp","knapsack"],
-        code:"int knapsack(vector<int>& wt, vector<int>& val, int W) {\n    int n = wt.size();\n    vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));\n    for (int i = 1; i <= n; i++) {\n        for (int w = 0; w <= W; w++) {\n            dp[i][w] = dp[i - 1][w];\n            if (wt[i - 1] <= w)\n                dp[i][w] = max(dp[i][w], dp[i - 1][w - wt[i - 1]] + val[i - 1]);\n        }\n    }\n    return dp[n][W];\n}",
-        notes:"Can be compressed to a 1D array (iterate w from W down to wt[i-1]) to cut space to O(W)."},
-      {id:uid(),title:"Longest Increasing Subsequence",category:"Dynamic Programming",time:"O(n log n)",space:"O(n)",tags:["dp","lis","binary-search"],
-        code:"int lengthOfLIS(vector<int>& nums) {\n    vector<int> tails;\n    for (int x : nums) {\n        auto it = lower_bound(tails.begin(), tails.end(), x);\n        if (it == tails.end()) tails.push_back(x);\n        else *it = x;\n    }\n    return (int)tails.size();\n}",
-        notes:"tails is not the actual subsequence, only tracks the smallest tail for each length. Use strictly < vs <= to control strict/non-strict."},
-      {id:uid(),title:"Backtracking (subsets)",category:"Backtracking",time:"O(2^n)",space:"O(n)",tags:["backtracking","subsets","recursion"],
-        code:"void backtrack(int idx, vector<int>& nums, vector<int>& path, vector<vector<int>>& result) {\n    result.push_back(path); // record current subset\n    for (int i = idx; i < (int)nums.size(); i++) {\n        path.push_back(nums[i]);\n        backtrack(i + 1, nums, path, result);\n        path.pop_back();\n    }\n}",
-        notes:"General include/exclude recursion skeleton. Swap the base case and loop bounds to adapt for permutations, combinations, or N-Queens."},
-      {id:uid(),title:"Trie (insert & search)",category:"Data Structures",time:"O(L) per op",space:"O(N*L)",tags:["trie","strings"],
-        code:"struct TrieNode {\n    TrieNode* child[26] = {};\n    bool isEnd = false;\n};\n\nstruct Trie {\n    TrieNode* root = new TrieNode();\n    void insert(const string& word) {\n        TrieNode* cur = root;\n        for (char c : word) {\n            int i = c - 'a';\n            if (!cur->child[i]) cur->child[i] = new TrieNode();\n            cur = cur->child[i];\n        }\n        cur->isEnd = true;\n    }\n    bool search(const string& word) {\n        TrieNode* cur = root;\n        for (char c : word) {\n            int i = c - 'a';\n            if (!cur->child[i]) return false;\n            cur = cur->child[i];\n        }\n        return cur->isEnd;\n    }\n};",
-        notes:"Assumes lowercase a-z. Add a startsWith() by dropping the isEnd check at the end of the traversal."},
-      {id:uid(),title:"Segment Tree (sum, point update)",category:"Data Structures",time:"O(log n) per op",space:"O(n)",tags:["segment-tree","range-query"],
-        code:"struct SegTree {\n    int n;\n    vector<long long> tree;\n    SegTree(int n_) : n(n_), tree(4 * n_, 0) {}\n    void update(int node, int start, int end, int idx, int val) {\n        if (start == end) { tree[node] = val; return; }\n        int mid = (start + end) / 2;\n        if (idx <= mid) update(2*node, start, mid, idx, val);\n        else update(2*node+1, mid+1, end, idx, val);\n        tree[node] = tree[2*node] + tree[2*node+1];\n    }\n    long long query(int node, int start, int end, int l, int r) {\n        if (r < start || end < l) return 0;\n        if (l <= start && end <= r) return tree[node];\n        int mid = (start + end) / 2;\n        return query(2*node, start, mid, l, r) + query(2*node+1, mid+1, end, l, r);\n    }\n};",
-        notes:"Call update(1, 0, n-1, idx, val) and query(1, 0, n-1, l, r) from outside. Swap sum for min/max/gcd as needed."},
-      {id:uid(),title:"Topological Sort (Kahn's)",category:"Graphs",time:"O(V+E)",space:"O(V)",tags:["graph","topo-sort"],
-        code:"vector<int> topoSort(int n, vector<vector<int>>& adj) {\n    vector<int> indegree(n, 0);\n    for (int u = 0; u < n; u++)\n        for (int v : adj[u]) indegree[v]++;\n\n    queue<int> q;\n    for (int i = 0; i < n; i++) if (indegree[i] == 0) q.push(i);\n\n    vector<int> order;\n    while (!q.empty()) {\n        int u = q.front(); q.pop();\n        order.push_back(u);\n        for (int v : adj[u]) {\n            if (--indegree[v] == 0) q.push(v);\n        }\n    }\n    return order;\n}",
-        notes:"If order.size() < n, the graph has a cycle and no valid topological order exists."},
-      {id:uid(),title:"Fast I/O Boilerplate",category:"Misc",time:"-",space:"-",tags:["boilerplate","io"],
-        code:"#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n\n    int t;\n    cin >> t;\n    while (t--) {\n        // solve()\n    }\n\n    return 0;\n}",
-        notes:"Standard competitive-programming starting point with fast I/O and a multi-testcase loop."}
-    ];
-  }
-
   var state = {
     templates: [],
     query: "",
@@ -240,24 +184,6 @@
 
   var app = document.getElementById("app");
   var toastTimer = null;
-
-  async function loadTemplates(){
-    try{
-      var res = await window.storage.get(STORAGE_KEY, false);
-      if(res && typeof res.value === "string") return JSON.parse(res.value);
-      return null;
-    }catch(e){
-      return null;
-    }
-  }
-
-  async function persist(){
-    try{
-      await window.storage.set(STORAGE_KEY, JSON.stringify(state.templates), false);
-    }catch(e){
-      state.error = "Couldn't save just now — your change is only kept in this session.";
-    }
-  }
 
   function showToast(msg){
     state.toast = msg;
@@ -292,6 +218,7 @@
     var hasSelection = !!state.selectedId;
     app.innerHTML =
       renderTopbar() +
+      (state.error ? '<div class="error-banner">' + escapeHtml(state.error) + '</div>' : "") +
       '<div class="layout' + (hasSelection ? ' has-selection' : '') + '">' +
         renderSidebar() +
         renderDetail() +
@@ -515,10 +442,7 @@
       var id = el.getAttribute("data-id");
       var tmpl = findTemplate(id);
       if(tmpl && confirm('Delete "' + tmpl.title + '"? This can\'t be undone.')){
-        state.templates = state.templates.filter(function(x){ return x.id !== id; });
-        if(state.selectedId === id) state.selectedId = null;
-        persist();
-        render();
+        deleteTemplate(id);
       }
       return;
     }
@@ -533,7 +457,7 @@
     if(action === "import"){ document.getElementById("import-input").click(); return; }
   }
 
-  function onFormSubmit(e){
+  async function onFormSubmit(e){
     e.preventDefault();
     var fd = new FormData(e.target);
     var title = String(fd.get("title")||"").trim();
@@ -546,21 +470,48 @@
 
     if(!title || !code) return;
 
-    if(state.modal.mode === "edit"){
-      var existing = findTemplate(state.modal.id);
-      if(existing){
-        existing.title = title; existing.category = category; existing.code = code;
-        existing.time = time; existing.space = space; existing.notes = notes; existing.tags = tags;
-      }
-    } else {
-      var fresh = {id: uid(), title:title, category:category, code:code, time:time, space:space, notes:notes, tags:tags};
-      state.templates.unshift(fresh);
-      state.selectedId = fresh.id;
-    }
+    var payload = {title:title, category:category, code:code, time:time, space:space, notes:notes, tags:tags};
 
-    state.modal = null;
-    persist();
-    render();
+    try{
+      if(state.modal.mode === "edit"){
+        var res = await fetch(API + "/" + state.modal.id, {
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error("update failed");
+        var updated = await res.json();
+        var idx = state.templates.findIndex(function(x){ return x.id === updated.id; });
+        if(idx !== -1) state.templates[idx] = updated;
+      } else {
+        var res2 = await fetch(API, {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(payload)
+        });
+        if(!res2.ok) throw new Error("create failed");
+        var created = await res2.json();
+        state.templates.unshift(created);
+        state.selectedId = created.id;
+      }
+      state.modal = null;
+      state.error = null;
+      render();
+    }catch(err){
+      showToast("Couldn't save — check your connection to the server");
+    }
+  }
+
+  async function deleteTemplate(id){
+    try{
+      var res = await fetch(API + "/" + id, {method:"DELETE"});
+      if(!res.ok) throw new Error("delete failed");
+      state.templates = state.templates.filter(function(x){ return x.id !== id; });
+      if(state.selectedId === id) state.selectedId = null;
+      render();
+    }catch(err){
+      showToast("Couldn't delete — check your connection to the server");
+    }
   }
 
   function copyToClipboard(text){
@@ -606,29 +557,20 @@
     var file = e.target.files[0];
     if(!file) return;
     var reader = new FileReader();
-    reader.onload = function(){
+    reader.onload = async function(){
       try{
         var data = JSON.parse(reader.result);
         if(!Array.isArray(data)) throw new Error("bad format");
-        var added = 0;
-        data.forEach(function(item){
-          if(item && item.title && item.code){
-            state.templates.unshift({
-              id: uid(),
-              title: String(item.title),
-              category: String(item.category || "Misc"),
-              code: String(item.code),
-              time: String(item.time || ""),
-              space: String(item.space || ""),
-              notes: String(item.notes || ""),
-              tags: Array.isArray(item.tags) ? item.tags.map(String) : []
-            });
-            added++;
-          }
+        var res = await fetch(API + "/import", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(data)
         });
-        persist();
+        if(!res.ok) throw new Error("import failed");
+        var inserted = await res.json();
+        state.templates = inserted.concat(state.templates);
         render();
-        showToast(added + " template" + (added===1?"":"s") + " imported");
+        showToast(inserted.length + " template" + (inserted.length===1?"":"s") + " imported");
       }catch(err){
         showToast("Couldn't read that file — expecting a vault JSON export");
       }
@@ -641,13 +583,13 @@
 
   async function init(){
     render();
-    var data = await loadTemplates();
-    if(data === null){
-      data = defaultTemplates();
-      state.templates = data;
-      await persist();
-    } else {
-      state.templates = data;
+    try{
+      var res = await fetch(API);
+      if(!res.ok) throw new Error("load failed");
+      state.templates = await res.json();
+    }catch(err){
+      state.templates = [];
+      state.error = "Couldn't load templates from the server. Make sure the Node server is running and MONGODB_URI in .env is set correctly.";
     }
     state.loading = false;
     if(state.templates.length > 0) state.selectedId = state.templates[0].id;
