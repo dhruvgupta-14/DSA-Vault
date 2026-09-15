@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSA Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1115;
+    --panel:#171A20;
+    --panel-alt:#1D2129;
+    --code-bg:#0B0D11;
+    --border:#262B33;
+    --text:#EDEFF3;
+    --text-muted:#8B93A3;
+    --accent:#E8A33D;
+    --accent-soft:rgba(232,163,61,0.14);
+    --danger:#E2685C;
+    --danger-soft:rgba(226,104,92,0.12);
+    --success:#6FCF97;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono','SFMono-Regular', Consolas, monospace;
+    --tok-kw:#E8A33D;
+    --tok-type:#7FB0E0;
+    --tok-str:#9BCB7B;
+    --tok-num:#C99BE0;
+    --tok-com:#616B7A;
+    --tok-pre:#E2685C;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans);}
+  button, input, textarea{font-family:inherit;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .app-shell{height:100vh;display:flex;flex-direction:column;}
+
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0;}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--font-mono);font-weight:600;font-size:15px;white-space:nowrap;}
+  .brand-mark{width:9px;height:15px;background:var(--accent);border-radius:2px;display:inline-block;}
+  .search-wrap{flex:1;max-width:440px;}
+  .search-input{width:100%;padding:9px 12px;background:var(--panel-alt);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13.5px;outline:none;}
+  .search-input::placeholder{color:var(--text-muted);}
+  .search-input:focus-visible{border-color:var(--accent);}
+  .topbar-actions{display:flex;gap:8px;margin-left:auto;}
+
+  .btn{cursor:pointer;border-radius:7px;font-size:13px;padding:8px 13px;border:1px solid transparent;}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .btn-primary{background:var(--accent);color:#1A1300;font-weight:600;border:none;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{background:var(--panel-alt);}
+  .btn-danger{background:transparent;border:1px solid rgba(226,104,92,0.45);color:var(--danger);}
+  .btn-danger:hover{background:var(--danger-soft);}
+  .btn-sm{padding:6px 10px;font-size:12.5px;}
+
+  .layout{flex:1;display:flex;min-height:0;}
+
+  .sidebar-col{width:340px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;background:var(--panel);}
+  .category-list{padding:10px;border-bottom:1px solid var(--border);overflow-y:auto;max-height:38vh;}
+  .category-item{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13.5px;color:var(--text-muted);margin-bottom:1px;}
+  .category-item:hover{background:var(--panel-alt);}
+  .category-item.active{background:var(--accent-soft);color:var(--accent);}
+  .category-item .count{font-family:var(--font-mono);font-size:11px;opacity:0.75;}
+  .category-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+
+  .template-list{flex:1;overflow-y:auto;padding:6px;}
+  .template-row{padding:10px 12px;border-radius:7px;cursor:pointer;border-left:3px solid transparent;margin-bottom:2px;}
+  .template-row:hover{background:var(--panel-alt);}
+  .template-row.active{background:var(--panel-alt);border-left-color:var(--accent);}
+  .template-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+  .row-title{font-weight:500;font-size:14px;margin-bottom:4px;}
+  .row-meta{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;}
+  .row-meta .cat{color:var(--accent);}
+
+  .list-empty, .detail-empty{padding:20px 14px;color:var(--text-muted);font-size:13.5px;line-height:1.6;}
+
+  .sidebar-footer{padding:10px;border-top:1px solid var(--border);display:flex;gap:8px;}
+
+  .detail-col{flex:1;overflow-y:auto;padding:30px 40px;min-width:0;}
+  .back-btn{display:none;margin-bottom:14px;}
+  .detail-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;}
+  .detail-title{font-size:23px;font-weight:600;line-height:1.3;margin:0;}
+  .detail-actions{display:flex;gap:8px;flex-shrink:0;}
+  .detail-meta{font-family:var(--font-mono);font-size:12.5px;color:var(--text-muted);margin:8px 0 4px;}
+  .tags-row{margin:10px 0 6px;}
+  .tag-chip{display:inline-block;font-family:var(--font-mono);font-size:11px;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:3px 8px;margin:0 6px 6px 0;}
+
+  .code-panel{border:1px solid var(--border);border-radius:9px;overflow:hidden;margin:18px 0;background:var(--code-bg);}
+  .code-panel-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--panel-alt);border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:12px;color:var(--text-muted);}
+  .code-pre{margin:0;padding:18px;overflow-x:auto;font-family:var(--font-mono);font-size:13px;line-height:1.65;}
+  .code-pre .tok-kw{color:var(--tok-kw);}
+  .code-pre .tok-type{color:var(--tok-type);}
+  .code-pre .tok-str{color:var(--tok-str);}
+  .code-pre .tok-num{color:var(--tok-num);}
+  .code-pre .tok-com{color:var(--tok-com);font-style:italic;}
+  .code-pre .tok-pre{color:var(--tok-pre);}
+
+  .notes-heading{font-size:12.5px;color:var(--text-muted);margin:20px 0 6px;}
+  .notes-block{font-size:14px;line-height:1.65;color:var(--text);white-space:pre-wrap;}
+
+  .empty-state{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;height:80%;max-width:440px;}
+  .empty-state h2{font-size:19px;margin:0 0 8px;}
+  .empty-state p{color:var(--text-muted);font-size:14px;line-height:1.6;margin:0 0 16px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(6,7,9,0.62);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:11px;width:100%;max-width:660px;max-height:88vh;overflow-y:auto;padding:26px;}
+  .modal h3{margin:0 0 18px;font-size:17px;}
+  .field-row{display:flex;gap:12px;}
+  .field-row > div{flex:1;}
+  .field-label{font-size:12px;color:var(--text-muted);margin-bottom:5px;display:block;}
+  .field-input, .field-textarea{width:100%;background:var(--panel-alt);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:9px 11px;font-size:13.5px;margin-bottom:15px;outline:none;}
+  .field-input:focus-visible, .field-textarea:focus-visible{border-color:var(--accent);}
+  .field-textarea{resize:vertical;font-family:var(--font-sans);}
+  .field-textarea.code{font-family:var(--font-mono);font-size:13px;min-height:230px;}
+  .field-hint{font-size:11.5px;color:var(--text-muted);margin:-11px 0 15px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel-alt);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;z-index:100;box-shadow:0 6px 18px rgba(0,0,0,0.35);}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+
+  @media (max-width: 760px){
+    .sidebar-col{width:100%;border-right:none;}
+    .detail-col{padding:20px;}
+    .layout.has-selection .sidebar-col{display:none;}
+    .layout:not(.has-selection) .detail-col{display:none;}
+    .back-btn{display:inline-flex;}
+    .search-wrap{max-width:none;}
+    .topbar{flex-wrap:wrap;}
+    .modal{padding:20px;}
+    .field-row{flex-direction:column;gap:0;}
+  }
+</style>
+</head>
+<body>
+<div id="app" class="app-shell"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "dsa-templates-v1";
+
+  var CPP_KEYWORDS = new Set(["alignas","alignof","and","and_eq","asm","auto","bitand","bitor","break","case","catch","class","compl","const","constexpr","const_cast","continue","decltype","default","delete","do","dynamic_cast","else","enum","explicit","export","extern","false","final","for","friend","goto","if","inline","mutable","namespace","new","noexcept","not","not_eq","nullptr","operator","or","or_eq","override","private","protected","public","return","sizeof","static","static_assert","static_cast","struct","switch","template","this","thread_local","throw","true","try","typedef","typeid","typename","union","using","virtual","volatile","while","xor","xor_eq"]);
+  var CPP_TYPES = new Set(["int","long","short","char","bool","float","double","void","unsigned","signed","size_t","auto","string","vector","pair","map","unordered_map","set","unordered_set","queue","priority_queue","stack","deque","list","array","tuple","function","LLONG_MAX","LLONG_MIN","INT_MAX","INT_MIN"]);
+
+  function escapeHtml(s){
+    return String(s == null ? "" : s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  }
+
+  function highlightCpp(raw){
+    var escaped = String(raw||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    var pattern = /(\/\/.*$)|(\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(#\s*\w+)|(\b\d+\.?\d*[fFlLuU]*\b)|(\b[A-Za-z_]\w*\b)/gm;
+    return escaped.replace(pattern, function(m, com1, com2, str, ch, pre, num, word){
+      if(com1 || com2) return '<span class="tok-com">'+m+'</span>';
+      if(str || ch) return '<span class="tok-str">'+m+'</span>';
+      if(pre) return '<span class="tok-pre">'+m+'</span>';
+      if(num) return '<span class="tok-num">'+m+'</span>';
+      if(word){
+        if(CPP_KEYWORDS.has(word)) return '<span class="tok-kw">'+m+'</span>';
+        if(CPP_TYPES.has(word)) return '<span class="tok-type">'+m+'</span>';
+        return m;
+      }
+      return m;
+    });
+  }
+
+  function uid(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "id-"+Date.now()+"-"+Math.random().toString(16).slice(2);
+  }
+
+  function defaultTemplates(){
+    return [
+      {id:uid(),title:"Binary Search",category:"Searching",time:"O(log n)",space:"O(1)",tags:["search","arrays"],
+        code:"int binarySearch(vector<int>& arr, int target) {\n    int lo = 0, hi = (int)arr.size() - 1;\n    while (lo <= hi) {\n        int mid = lo + (hi - lo) / 2;\n        if (arr[mid] == target) return mid;\n        else if (arr[mid] < target) lo = mid + 1;\n        else hi = mid - 1;\n    }\n    return -1; // not found\n}",
+        notes:"Classic iterative binary search on a sorted array. Adapt the comparison for lower_bound / upper_bound style variants."},
+      {id:uid(),title:"Two Pointers (sorted array)",category:"Arrays",time:"O(n)",space:"O(1)",tags:["two-pointer","arrays"],
+        code:"bool twoSumSorted(vector<int>& arr, int target) {\n    int left = 0, right = (int)arr.size() - 1;\n    while (left < right) {\n        int sum = arr[left] + arr[right];\n        if (sum == target) return true;\n        else if (sum < target) left++;\n        else right--;\n    }\n    return false;\n}",
+        notes:"Move pointers inward based on comparison to target. Works for pair-sum, container-with-most-water style problems."},
+      {id:uid(),title:"Sliding Window (variable size)",category:"Arrays",time:"O(n)",space:"O(1)",tags:["sliding-window","arrays"],
+        code:"int longestSubarrayAtMostK(vector<int>& arr, int k) {\n    int left = 0, sum = 0, best = 0;\n    for (int right = 0; right < (int)arr.size(); right++) {\n        sum += arr[right];\n        while (sum > k) {\n            sum -= arr[left];\n            left++;\n        }\n        best = max(best, right - left + 1);\n    }\n    return best;\n}",
+        notes:"Shrink the window from the left whenever the constraint is violated. Swap the condition for max-sum / distinct-count variants."},
+      {id:uid(),title:"DFS (adjacency list)",category:"Graphs",time:"O(V+E)",space:"O(V)",tags:["graph","dfs"],
+        code:"void dfs(int node, vector<vector<int>>& adj, vector<bool>& visited) {\n    visited[node] = true;\n    // process(node);\n    for (int next : adj[node]) {\n        if (!visited[next]) dfs(next, adj, visited);\n    }\n}",
+        notes:"Recursive DFS. For large graphs, convert to an explicit stack to avoid recursion depth issues."},
+      {id:uid(),title:"BFS (shortest path, unweighted)",category:"Graphs",time:"O(V+E)",space:"O(V)",tags:["graph","bfs","shortest-path"],
+        code:"vector<int> bfs(int start, vector<vector<int>>& adj, int n) {\n    vector<int> dist(n, -1);\n    queue<int> q;\n    dist[start] = 0;\n    q.push(start);\n    while (!q.empty()) {\n        int node = q.front(); q.pop();\n        for (int next : adj[node]) {\n            if (dist[next] == -1) {\n                dist[next] = dist[node] + 1;\n                q.push(next);\n            }\n        }\n    }\n    return dist;\n}",
+        notes:"dist[i] == -1 means unreachable. Works only when all edge weights are equal (1)."},
+      {id:uid(),title:"Union-Find (DSU)",category:"Data Structures",time:"O(a(n))",space:"O(n)",tags:["dsu","union-find","graph"],
+        code:"struct DSU {\n    vector<int> parent, rnk;\n    DSU(int n) : parent(n), rnk(n, 0) {\n        iota(parent.begin(), parent.end(), 0);\n    }\n    int find(int x) {\n        if (parent[x] != x) parent[x] = find(parent[x]);\n        return parent[x];\n    }\n    bool unite(int a, int b) {\n        a = find(a); b = find(b);\n        if (a == b) return false;\n        if (rnk[a] < rnk[b]) swap(a, b);\n        parent[b] = a;\n        if (rnk[a] == rnk[b]) rnk[a]++;\n        return true;\n    }\n};",
+        notes:"Path compression + union by rank. Near-constant time per operation. Great for Kruskal's MST and connectivity queries."},
+      {id:uid(),title:"Dijkstra (shortest path)",category:"Graphs",time:"O(E log V)",space:"O(V)",tags:["graph","dijkstra","shortest-path"],
+        code:"vector<long long> dijkstra(int start, int n, vector<vector<pair<int,int>>>& adj) {\n    vector<long long> dist(n, LLONG_MAX);\n    priority_queue<pair<long long,int>, vector<pair<long long,int>>, greater<>> pq;\n    dist[start] = 0;\n    pq.push({0, start});\n    while (!pq.empty()) {\n        auto [d, node] = pq.top(); pq.pop();\n        if (d > dist[node]) continue;\n        for (auto [next, w] : adj[node]) {\n            if (dist[node] + w < dist[next]) {\n                dist[next] = dist[node] + w;\n                pq.push({dist[next], next});\n            }\n        }\n    }\n    return dist;\n}",
+        notes:"adj[node] holds (neighbor, weight) pairs. Requires non-negative weights. Use a min-heap via greater<>."},
+      {id:uid(),title:"Kadane's Algorithm",category:"Dynamic Programming",time:"O(n)",space:"O(1)",tags:["dp","subarray"],
+        code:"int maxSubArray(vector<int>& nums) {\n    int best = nums[0], cur = nums[0];\n    for (int i = 1; i < (int)nums.size(); i++) {\n        cur = max(nums[i], cur + nums[i]);\n        best = max(best, cur);\n    }\n    return best;\n}",
+        notes:"Maximum sum contiguous subarray. cur decides whether to extend the previous run or restart at the current element."},
+      {id:uid(),title:"0/1 Knapsack",category:"Dynamic Programming",time:"O(n*W)",space:"O(n*W)",tags:["dp","knapsack"],
+        code:"int knapsack(vector<int>& wt, vector<int>& val, int W) {\n    int n = wt.size();\n    vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));\n    for (int i = 1; i <= n; i++) {\n        for (int w = 0; w <= W; w++) {\n            dp[i][w] = dp[i - 1][w];\n            if (wt[i - 1] <= w)\n                dp[i][w] = max(dp[i][w], dp[i - 1][w - wt[i - 1]] + val[i - 1]);\n        }\n    }\n    return dp[n][W];\n}",
+        notes:"Can be compressed to a 1D array (iterate w from W down to wt[i-1]) to cut space to O(W)."},
+      {id:uid(),title:"Longest Increasing Subsequence",category:"Dynamic Programming",time:"O(n log n)",space:"O(n)",tags:["dp","lis","binary-search"],
+        code:"int lengthOfLIS(vector<int>& nums) {\n    vector<int> tails;\n    for (int x : nums) {\n        auto it = lower_bound(tails.begin(), tails.end(), x);\n        if (it == tails.end()) tails.push_back(x);\n        else *it = x;\n    }\n    return (int)tails.size();\n}",
+        notes:"tails is not the actual subsequence, only tracks the smallest tail for each length. Use strictly < vs <= to control strict/non-strict."},
+      {id:uid(),title:"Backtracking (subsets)",category:"Backtracking",time:"O(2^n)",space:"O(n)",tags:["backtracking","subsets","recursion"],
+        code:"void backtrack(int idx, vector<int>& nums, vector<int>& path, vector<vector<int>>& result) {\n    result.push_back(path); // record current subset\n    for (int i = idx; i < (int)nums.size(); i++) {\n        path.push_back(nums[i]);\n        backtrack(i + 1, nums, path, result);\n        path.pop_back();\n    }\n}",
+        notes:"General include/exclude recursion skeleton. Swap the base case and loop bounds to adapt for permutations, combinations, or N-Queens."},
+      {id:uid(),title:"Trie (insert & search)",category:"Data Structures",time:"O(L) per op",space:"O(N*L)",tags:["trie","strings"],
+        code:"struct TrieNode {\n    TrieNode* child[26] = {};\n    bool isEnd = false;\n};\n\nstruct Trie {\n    TrieNode* root = new TrieNode();\n    void insert(const string& word) {\n        TrieNode* cur = root;\n        for (char c : word) {\n            int i = c - 'a';\n            if (!cur->child[i]) cur->child[i] = new TrieNode();\n            cur = cur->child[i];\n        }\n        cur->isEnd = true;\n    }\n    bool search(const string& word) {\n        TrieNode* cur = root;\n        for (char c : word) {\n            int i = c - 'a';\n            if (!cur->child[i]) return false;\n            cur = cur->child[i];\n        }\n        return cur->isEnd;\n    }\n};",
+        notes:"Assumes lowercase a-z. Add a startsWith() by dropping the isEnd check at the end of the traversal."},
+      {id:uid(),title:"Segment Tree (sum, point update)",category:"Data Structures",time:"O(log n) per op",space:"O(n)",tags:["segment-tree","range-query"],
+        code:"struct SegTree {\n    int n;\n    vector<long long> tree;\n    SegTree(int n_) : n(n_), tree(4 * n_, 0) {}\n    void update(int node, int start, int end, int idx, int val) {\n        if (start == end) { tree[node] = val; return; }\n        int mid = (start + end) / 2;\n        if (idx <= mid) update(2*node, start, mid, idx, val);\n        else update(2*node+1, mid+1, end, idx, val);\n        tree[node] = tree[2*node] + tree[2*node+1];\n    }\n    long long query(int node, int start, int end, int l, int r) {\n        if (r < start || end < l) return 0;\n        if (l <= start && end <= r) return tree[node];\n        int mid = (start + end) / 2;\n        return query(2*node, start, mid, l, r) + query(2*node+1, mid+1, end, l, r);\n    }\n};",
+        notes:"Call update(1, 0, n-1, idx, val) and query(1, 0, n-1, l, r) from outside. Swap sum for min/max/gcd as needed."},
+      {id:uid(),title:"Topological Sort (Kahn's)",category:"Graphs",time:"O(V+E)",space:"O(V)",tags:["graph","topo-sort"],
+        code:"vector<int> topoSort(int n, vector<vector<int>>& adj) {\n    vector<int> indegree(n, 0);\n    for (int u = 0; u < n; u++)\n        for (int v : adj[u]) indegree[v]++;\n\n    queue<int> q;\n    for (int i = 0; i < n; i++) if (indegree[i] == 0) q.push(i);\n\n    vector<int> order;\n    while (!q.empty()) {\n        int u = q.front(); q.pop();\n        order.push_back(u);\n        for (int v : adj[u]) {\n            if (--indegree[v] == 0) q.push(v);\n        }\n    }\n    return order;\n}",
+        notes:"If order.size() < n, the graph has a cycle and no valid topological order exists."},
+      {id:uid(),title:"Fast I/O Boilerplate",category:"Misc",time:"-",space:"-",tags:["boilerplate","io"],
+        code:"#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n\n    int t;\n    cin >> t;\n    while (t--) {\n        // solve()\n    }\n\n    return 0;\n}",
+        notes:"Standard competitive-programming starting point with fast I/O and a multi-testcase loop."}
+    ];
+  }
+
+  var state = {
+    templates: [],
+    query: "",
+    category: "All",
+    selectedId: null,
+    modal: null,
+    loading: true,
+    toast: null,
+    error: null
+  };
+
+  var app = document.getElementById("app");
+  var toastTimer = null;
+
+  async function loadTemplates(){
+    try{
+      var res = await window.storage.get(STORAGE_KEY, false);
+      if(res && typeof res.value === "string") return JSON.parse(res.value);
+      return null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  async function persist(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify(state.templates), false);
+    }catch(e){
+      state.error = "Couldn't save just now — your change is only kept in this session.";
+    }
+  }
+
+  function showToast(msg){
+    state.toast = msg;
+    render();
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ state.toast = null; render(); }, 1700);
+  }
+
+  function getCategories(){
+    var map = {};
+    state.templates.forEach(function(t){ map[t.category] = (map[t.category]||0) + 1; });
+    return Object.keys(map).sort(function(a,b){ return a.localeCompare(b); }).map(function(c){ return {name:c, count:map[c]}; });
+  }
+
+  function getFiltered(){
+    var q = state.query.trim().toLowerCase();
+    return state.templates.filter(function(t){
+      if(state.category !== "All" && t.category !== state.category) return false;
+      if(!q) return true;
+      var hay = (t.title + " " + t.category + " " + (t.tags||[]).join(" ")).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+  }
+
+  function findTemplate(id){
+    return state.templates.filter(function(t){ return t.id === id; })[0] || null;
+  }
+
+  // ---------- rendering ----------
+
+  function render(){
+    var hasSelection = !!state.selectedId;
+    app.innerHTML =
+      renderTopbar() +
+      '<div class="layout' + (hasSelection ? ' has-selection' : '') + '">' +
+        renderSidebar() +
+        renderDetail() +
+      '</div>' +
+      (state.modal ? renderModal() : "") +
+      (state.toast ? '<div class="toast">' + escapeHtml(state.toast) + '</div>' : "");
+    attachHandlers();
+  }
+
+  function renderTopbar(){
+    return (
+      '<div class="topbar">' +
+        '<div class="brand"><span class="brand-mark"></span>DSA Vault</div>' +
+        '<div class="search-wrap"><input id="search-input" class="search-input" type="text" placeholder="Search by title, tag, or category" value="' + escapeHtml(state.query) + '"></div>' +
+        '<div class="topbar-actions">' +
+          '<button class="btn btn-ghost" data-action="export">Export JSON</button>' +
+          '<button class="btn btn-ghost" data-action="import">Import JSON</button>' +
+          '<button class="btn btn-primary" data-action="new">+ New Template</button>' +
+        '</div>' +
+        '<input type="file" id="import-input" accept="application/json" style="display:none">' +
+      '</div>'
+    );
+  }
+
+  function renderSidebar(){
+    var cats = getCategories();
+    var filtered = getFiltered();
+
+    var catHtml = '<div class="category-item' + (state.category==="All"?" active":"") + '" data-action="set-category" data-category="All" tabindex="0"><span>All templates</span><span class="count">' + state.templates.length + '</span></div>';
+    cats.forEach(function(c){
+      catHtml += '<div class="category-item' + (state.category===c.name?" active":"") + '" data-action="set-category" data-category="' + escapeHtml(c.name) + '" tabindex="0"><span>' + escapeHtml(c.name) + '</span><span class="count">' + c.count + '</span></div>';
+    });
+
+    var listHtml;
+    if(state.templates.length === 0){
+      listHtml = '<div class="list-empty">No templates yet. Add your first one to start your revision library.</div>';
+    } else if(filtered.length === 0){
+      listHtml = '<div class="list-empty">No templates match your search.</div>';
+    } else {
+      listHtml = filtered.map(function(t){
+        var active = t.id === state.selectedId;
+        return (
+          '<div class="template-row' + (active?" active":"") + '" data-action="select" data-id="' + t.id + '" tabindex="0">' +
+            '<div class="row-title">' + escapeHtml(t.title) + '</div>' +
+            '<div class="row-meta"><span class="cat">' + escapeHtml(t.category) + '</span><span>' + escapeHtml(t.time||"") + '</span></div>' +
+          '</div>'
+        );
+      }).join("");
+    }
+
+    return (
+      '<div class="sidebar-col">' +
+        '<div class="category-list">' + catHtml + '</div>' +
+        '<div class="template-list">' + listHtml + '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderDetail(){
+    if(state.loading){
+      return '<div class="detail-col"><div class="detail-empty">Loading your templates…</div></div>';
+    }
+
+    var t = state.selectedId ? findTemplate(state.selectedId) : null;
+
+    if(!t){
+      if(state.templates.length === 0){
+        return (
+          '<div class="detail-col">' +
+            '<div class="empty-state">' +
+              '<h2>Your vault is empty</h2>' +
+              '<p>Save the C++ patterns and algorithm templates you keep reaching for — two pointers, DFS, DP skeletons, whatever you revise most — so they are one click away, anywhere you open this page.</p>' +
+              '<button class="btn btn-primary" data-action="new">+ Add your first template</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+      return '<div class="detail-col"><div class="detail-empty">Select a template on the left to view it here.</div></div>';
+    }
+
+    var tagsHtml = (t.tags||[]).map(function(tag){ return '<span class="tag-chip">' + escapeHtml(tag) + '</span>'; }).join("");
+
+    return (
+      '<div class="detail-col">' +
+        '<button class="btn btn-ghost back-btn" data-action="back">&larr; Back to list</button>' +
+        '<div class="detail-header">' +
+          '<h2 class="detail-title">' + escapeHtml(t.title) + '</h2>' +
+          '<div class="detail-actions">' +
+            '<button class="btn btn-ghost btn-sm" data-action="edit" data-id="' + t.id + '">Edit</button>' +
+            '<button class="btn btn-danger btn-sm" data-action="delete" data-id="' + t.id + '">Delete</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="detail-meta">' + escapeHtml(t.category) + (t.time && t.time !== "-" ? " · " + escapeHtml(t.time) + " time" : "") + (t.space && t.space !== "-" ? " · " + escapeHtml(t.space) + " space" : "") + '</div>' +
+        (tagsHtml ? '<div class="tags-row">' + tagsHtml + '</div>' : "") +
+        '<div class="code-panel">' +
+          '<div class="code-panel-bar"><span>template.cpp</span><button class="btn btn-ghost btn-sm" data-action="copy" data-id="' + t.id + '">Copy code</button></div>' +
+          '<pre class="code-pre"><code>' + highlightCpp(t.code) + '</code></pre>' +
+        '</div>' +
+        (t.notes ? '<div class="notes-heading">Notes</div><div class="notes-block">' + escapeHtml(t.notes) + '</div>' : "") +
+      '</div>'
+    );
+  }
+
+  function renderModal(){
+    var isEdit = state.modal.mode === "edit";
+    var t = isEdit ? findTemplate(state.modal.id) : null;
+    var v = t || {title:"",category:"",time:"",space:"",tags:[],code:"",notes:""};
+    var suggestedCats = ["Arrays","Strings","Searching","Sorting","Graphs","Trees","Data Structures","Dynamic Programming","Backtracking","Greedy","Bit Manipulation","Math","Misc"];
+
+    return (
+      '<div class="modal-overlay" data-action="overlay-close">' +
+        '<div class="modal" data-stop-close>' +
+          '<h3>' + (isEdit ? "Edit template" : "New template") + '</h3>' +
+          '<form id="template-form">' +
+            '<label class="field-label">Title</label>' +
+            '<input class="field-input" name="title" required value="' + escapeHtml(v.title) + '" placeholder="e.g. Sliding Window (variable size)">' +
+
+            '<div class="field-row">' +
+              '<div>' +
+                '<label class="field-label">Category</label>' +
+                '<input class="field-input" name="category" required list="category-suggestions" value="' + escapeHtml(v.category) + '" placeholder="e.g. Graphs">' +
+              '</div>' +
+              '<div>' +
+                '<label class="field-label">Tags (comma separated)</label>' +
+                '<input class="field-input" name="tags" value="' + escapeHtml((v.tags||[]).join(", ")) + '" placeholder="dp, subsets">' +
+              '</div>' +
+            '</div>' +
+            '<datalist id="category-suggestions">' + suggestedCats.map(function(c){ return '<option value="' + escapeHtml(c) + '">'; }).join("") + '</datalist>' +
+
+            '<div class="field-row">' +
+              '<div>' +
+                '<label class="field-label">Time complexity</label>' +
+                '<input class="field-input" name="time" value="' + escapeHtml(v.time) + '" placeholder="O(n log n)">' +
+              '</div>' +
+              '<div>' +
+                '<label class="field-label">Space complexity</label>' +
+                '<input class="field-input" name="space" value="' + escapeHtml(v.space) + '" placeholder="O(1)">' +
+              '</div>' +
+            '</div>' +
+
+            '<label class="field-label">Code</label>' +
+            '<textarea class="field-textarea code" name="code" required placeholder="Paste your C++ template here">' + escapeHtml(v.code) + '</textarea>' +
+
+            '<label class="field-label">Notes (optional)</label>' +
+            '<textarea class="field-textarea" name="notes" placeholder="When to use it, edge cases, variants...">' + escapeHtml(v.notes) + '</textarea>' +
+
+            '<div class="modal-actions">' +
+              '<button type="button" class="btn btn-ghost" data-action="close-modal">Cancel</button>' +
+              '<button type="submit" class="btn btn-primary">' + (isEdit ? "Save changes" : "Save template") + '</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- event handling ----------
+
+  function attachHandlers(){
+    var searchInput = document.getElementById("search-input");
+    if(searchInput){
+      searchInput.addEventListener("input", function(e){
+        state.query = e.target.value;
+        var pos = e.target.selectionStart;
+        render();
+        var again = document.getElementById("search-input");
+        if(again){ again.focus(); again.setSelectionRange(pos, pos); }
+      });
+    }
+
+    var importInput = document.getElementById("import-input");
+    if(importInput){
+      importInput.addEventListener("change", handleImportFile);
+    }
+
+    app.addEventListener("click", onAppClick);
+    app.addEventListener("keydown", onAppKeydown);
+
+    var form = document.getElementById("template-form");
+    if(form){
+      form.addEventListener("submit", onFormSubmit);
+    }
+  }
+
+  function onAppKeydown(e){
+    if(e.key !== "Enter") return;
+    var el = e.target.closest("[data-action='select'], [data-action='set-category']");
+    if(el) el.click();
+  }
+
+  function onAppClick(e){
+    var overlay = e.target.closest("[data-action='overlay-close']");
+    if(overlay && !e.target.closest("[data-stop-close]")){
+      state.modal = null; render(); return;
+    }
+
+    var el = e.target.closest("[data-action]");
+    if(!el) return;
+    var action = el.getAttribute("data-action");
+
+    if(action === "new"){ state.modal = {mode:"add"}; render(); return; }
+    if(action === "close-modal"){ state.modal = null; render(); return; }
+    if(action === "back"){ state.selectedId = null; render(); return; }
+
+    if(action === "set-category"){
+      state.category = el.getAttribute("data-category");
+      render(); return;
+    }
+
+    if(action === "select"){
+      state.selectedId = el.getAttribute("data-id");
+      render(); return;
+    }
+
+    if(action === "edit"){
+      state.modal = {mode:"edit", id: el.getAttribute("data-id")};
+      render(); return;
+    }
+
+    if(action === "delete"){
+      var id = el.getAttribute("data-id");
+      var tmpl = findTemplate(id);
+      if(tmpl && confirm('Delete "' + tmpl.title + '"? This can\'t be undone.')){
+        state.templates = state.templates.filter(function(x){ return x.id !== id; });
+        if(state.selectedId === id) state.selectedId = null;
+        persist();
+        render();
+      }
+      return;
+    }
+
+    if(action === "copy"){
+      var ct = findTemplate(el.getAttribute("data-id"));
+      if(ct) copyToClipboard(ct.code);
+      return;
+    }
+
+    if(action === "export"){ exportJson(); return; }
+    if(action === "import"){ document.getElementById("import-input").click(); return; }
+  }
+
+  function onFormSubmit(e){
+    e.preventDefault();
+    var fd = new FormData(e.target);
+    var title = String(fd.get("title")||"").trim();
+    var category = String(fd.get("category")||"").trim() || "Misc";
+    var code = String(fd.get("code")||"").trim();
+    var time = String(fd.get("time")||"").trim();
+    var space = String(fd.get("space")||"").trim();
+    var notes = String(fd.get("notes")||"").trim();
+    var tags = String(fd.get("tags")||"").split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+
+    if(!title || !code) return;
+
+    if(state.modal.mode === "edit"){
+      var existing = findTemplate(state.modal.id);
+      if(existing){
+        existing.title = title; existing.category = category; existing.code = code;
+        existing.time = time; existing.space = space; existing.notes = notes; existing.tags = tags;
+      }
+    } else {
+      var fresh = {id: uid(), title:title, category:category, code:code, time:time, space:space, notes:notes, tags:tags};
+      state.templates.unshift(fresh);
+      state.selectedId = fresh.id;
+    }
+
+    state.modal = null;
+    persist();
+    render();
+  }
+
+  function copyToClipboard(text){
+    function done(){ showToast("Copied to clipboard"); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    }catch(e){
+      showToast("Couldn't copy — select and copy manually");
+    }
+  }
+
+  function exportJson(){
+    try{
+      var blob = new Blob([JSON.stringify(state.templates, null, 2)], {type:"application/json"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = "dsa-templates-backup.json";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Backup downloaded");
+    }catch(e){
+      showToast("Export failed");
+    }
+  }
+
+  function handleImportFile(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(reader.result);
+        if(!Array.isArray(data)) throw new Error("bad format");
+        var added = 0;
+        data.forEach(function(item){
+          if(item && item.title && item.code){
+            state.templates.unshift({
+              id: uid(),
+              title: String(item.title),
+              category: String(item.category || "Misc"),
+              code: String(item.code),
+              time: String(item.time || ""),
+              space: String(item.space || ""),
+              notes: String(item.notes || ""),
+              tags: Array.isArray(item.tags) ? item.tags.map(String) : []
+            });
+            added++;
+          }
+        });
+        persist();
+        render();
+        showToast(added + " template" + (added===1?"":"s") + " imported");
+      }catch(err){
+        showToast("Couldn't read that file — expecting a vault JSON export");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  }
+
+  // ---------- init ----------
+
+  async function init(){
+    render();
+    var data = await loadTemplates();
+    if(data === null){
+      data = defaultTemplates();
+      state.templates = data;
+      await persist();
+    } else {
+      state.templates = data;
+    }
+    state.loading = false;
+    if(state.templates.length > 0) state.selectedId = state.templates[0].id;
+    render();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
